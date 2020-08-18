@@ -40,7 +40,6 @@ def package(package_name, tar_path, platform, platform_version):
     shared_library_name = shared_library_name[0]
 
     print("Packaging backend: ", shared_library_name)
-    print("Packaging libraries", members)
     libs.extractall(package_path)
 
     # Fix the library paths on mac
@@ -68,7 +67,7 @@ def package(package_name, tar_path, platform, platform_version):
             # TODO(vip): Update this to get a version from a central location
             NEUROPOD_VERSION="0.2.0",
             SHARED_LIBRARY_NAME=shared_library_name,
-            LIBS=str(members),
+            DATA_DIR=package_name,
             PLATFORM=platform,
             PLATFORM_VERSION=platform_version,
         )
@@ -90,15 +89,20 @@ def package(package_name, tar_path, platform, platform_version):
         os.path.join(package_path, "__init__.py")
     )
 
-    # Run it
-    subprocess.check_call([
-        sys.executable,
-        "setup.py",
-        "bdist_wheel",
-        "--plat-name",
-        distutils.util.get_platform().replace("-","_").replace(".","_") if IS_MAC else "manylinux2014_x86_64",
-        "--universal"], cwd=tmpdir)
-    subprocess.check_call([sys.executable, "setup.py", "install"], cwd=tmpdir)
+    with open(os.devnull, 'wb') as devnull:
+        # Build
+        print("Building...")
+        subprocess.check_call([
+            sys.executable,
+            "setup.py",
+            "bdist_wheel",
+            "--plat-name",
+            distutils.util.get_platform().replace("-","_").replace(".","_") if IS_MAC else "manylinux2014_x86_64",
+            "--universal"], cwd=tmpdir, stdout=devnull, stderr=devnull)
+
+        # Install
+        print("Installing...")
+        subprocess.check_call([sys.executable, "setup.py", "install"], cwd=tmpdir, stdout=devnull, stderr=devnull)
 
     # Move the wheel to the target directory
     whl_path = glob.glob(os.path.join(tmpdir, "dist/*.whl"))[0]

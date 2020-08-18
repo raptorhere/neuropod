@@ -12,14 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from setuptools import setup, find_packages
 
 REQUIRED_PACKAGES = ["neuropod=={NEUROPOD_VERSION}"]
+
+def package_files(directory):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join('..', path, filename))
+    return paths
+
+extra_files = package_files('{DATA_DIR}')
+
 
 setup(
     name="{PACKAGE_NAME}",
     version="{NEUROPOD_VERSION}",
     install_requires=REQUIRED_PACKAGES,
     packages=find_packages(),
-    package_data={{'': {LIBS}}},
+    package_data={{'': extra_files}},
 )
